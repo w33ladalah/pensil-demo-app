@@ -10,9 +10,10 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [status, setStatus] = useState<string | null>(null); // for showing status
   const [polling, setPolling] = useState(false); // track polling state
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null); // hold image url until completed
 
   // Poll status endpoint
-  const pollStatus = async (workflowId: string, runId: string) => {
+  const pollStatus = async (workflowId: string, runId: string, imageUrl: string) => {
     setPolling(true);
     setStatus('Checking status...');
     let intervalId: NodeJS.Timeout | null = null;
@@ -23,7 +24,12 @@ export default function Home() {
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
         setStatus(data.status || JSON.stringify(data));
-        if (data.status === 'completed' || data.status === 'succeeded' || data.status === 'failed' || data.status === 'error') {
+        if (data.status && typeof data.status === 'string' && data.status.toLowerCase() === 'completed') {
+          setGeneratedImage(imageUrl);
+          finished = true;
+          setPolling(false);
+          if (intervalId) clearInterval(intervalId);
+        } else if (['succeeded', 'failed', 'error'].includes((data.status || '').toLowerCase())) {
           finished = true;
           setPolling(false);
           if (intervalId) clearInterval(intervalId);
@@ -47,6 +53,7 @@ export default function Home() {
     setIsGenerating(true);
     setStatus(null);
     setGeneratedImage(null);
+    setPendingImageUrl(null);
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -64,14 +71,18 @@ export default function Home() {
       const result = await response.json();
 
       // Start polling status if workflow_id and run_id are present
-      if (result.workflow_id && result.run_id) {
-        pollStatus(result.workflow_id, result.run_id);
+      if (result.workflow_id && result.run_id && result.image_url) {
+        setPendingImageUrl(result.image_url);
+        pollStatus(result.workflow_id, result.run_id, result.image_url);
       }
 
-      // Handle the response from ComfyUI
-      if (result.image_url) {
-        setGeneratedImage(result.image_url);
-      } else {
+      // Do NOT set the image yet; only after status is completed
+      // if (result.image_url) {
+      //   setGeneratedImage(result.image_url);
+      // } else {
+      //   throw new Error('No image URL in response');
+      // }
+      if (!result.image_url) {
         throw new Error('No image URL in response');
       }
     } catch (error) {
@@ -81,6 +92,7 @@ export default function Home() {
       setIsGenerating(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">

@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   try {
     const status = await getRunStatus(workflow_id, run_id);
     return NextResponse.json(status);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
