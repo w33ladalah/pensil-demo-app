@@ -1,6 +1,6 @@
 # Pencil Comfy Demo App
 
-A web application that generates images using ComfyUI's API based on text prompts.
+A web application that generates images using ComfyUI's API based on text prompts. The app polls the generation status and only displays the image after completion.
 
 ## Getting Started
 
@@ -48,14 +48,17 @@ bun dev
 
 1. Enter your image description in the "Input Prompt" field
 2. Click the "Generate" button
-3. Wait for the image to be generated
-4. View your generated image in the preview area
+3. The app will poll the status of your image generation via the `/api/status` endpoint using the `workflow_id` and `run_id` from the backend response.
+4. The image will only be displayed once the generation status is `COMPLETED`.
+5. View your generated image in the preview area
 
 ## Features
 
 - Simple and intuitive interface
 - Fast image generation using ComfyUI
+- Polls status and displays images only when ready
 - Responsive design that works on desktop and mobile
+- Page title is set to "Pencil Comfy Demo App" for better branding
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
