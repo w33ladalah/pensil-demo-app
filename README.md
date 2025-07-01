@@ -1,8 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pencil Comfy Demo App
+
+A web application that generates images using ComfyUI's API based on text prompts.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 14.6.0 or later
+- A ComfyUI API key from [Comfy.icu](https://comfy.icu/)
+
+### Setup
+
+1. Clone the repository
+2. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+3. Create a `.env.local` file in the root directory and add your ComfyUI API key:
+
+```env
+COMFYICU_API_KEY=your_api_key_here
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
@@ -14,9 +42,20 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser to use the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How to Use
+
+1. Enter your image description in the "Input Prompt" field
+2. Click the "Generate" button
+3. Wait for the image to be generated
+4. View your generated image in the preview area
+
+## Features
+
+- Simple and intuitive interface
+- Fast image generation using ComfyUI
+- Responsive design that works on desktop and mobile
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
