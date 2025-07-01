@@ -10,13 +10,18 @@ export async function POST(request: Request) {
     // Workflow ID from ComfyUI
     const workflow_id = "-TNoGrWLPIM6yTpgG9H5Z";
 
-    // Prepare the workflow with the user's prompt
+    // Generate a random seed for this request
+    const randomSeed = Math.floor(Math.random() * 4294967295); // 32-bit unsigned integer
+    const timestamp = Date.now();
+    const uniqueId = randomSeed + timestamp;
+
+    // Prepare the workflow with the user's prompt and unique seed
     const workflow = {
       "3": {
         "_meta": {"title": "KSampler"},
         "inputs": {
           "cfg": 8,
-          "seed": Math.floor(Math.random() * 1000000000), // Random seed
+          "seed": uniqueId, // Unique seed for each request
           "model": ["4", 0],
           "steps": 20,
           "denoise": 1,
@@ -93,15 +98,16 @@ export async function POST(request: Request) {
       })
     });
 
-    console.log(await response.json());
+    const data = await response.json();
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API request failed: ${error}`);
+      console.error('API Error:', data);
+      throw new Error(`API request failed: ${JSON.stringify(data)}`);
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    console.log('API Response:', data);
+    const image_url = `https://r2.comfy.icu/workflows/${workflow_id}/output/${data.id}/ComfyUI_00001_.png`;
+    return NextResponse.json({ image_url, workflow_id, run_id: data.id });
 
   } catch (error) {
     console.error('Error generating image:', error);

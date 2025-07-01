@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState } from 'react';
@@ -7,11 +8,45 @@ export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [status, setStatus] = useState<string | null>(null); // for showing status
+  const [polling, setPolling] = useState(false); // track polling state
+
+  // Poll status endpoint
+  const pollStatus = async (workflowId: string, runId: string) => {
+    setPolling(true);
+    setStatus('Checking status...');
+    let intervalId: NodeJS.Timeout | null = null;
+    let finished = false;
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/status?workflow_id=${workflowId}&run_id=${runId}`);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        setStatus(data.status || JSON.stringify(data));
+        if (data.status === 'completed' || data.status === 'succeeded' || data.status === 'failed' || data.status === 'error') {
+          finished = true;
+          setPolling(false);
+          if (intervalId) clearInterval(intervalId);
+        }
+      } catch (err) {
+        setStatus('Error checking status');
+        finished = true;
+        setPolling(false);
+        if (intervalId) clearInterval(intervalId);
+      }
+    };
+    await poll();
+    intervalId = setInterval(() => {
+      if (!finished) poll();
+    }, 2000);
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
 
     setIsGenerating(true);
+    setStatus(null);
+    setGeneratedImage(null);
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -27,10 +62,15 @@ export default function Home() {
       }
 
       const result = await response.json();
-      
+
+      // Start polling status if workflow_id and run_id are present
+      if (result.workflow_id && result.run_id) {
+        pollStatus(result.workflow_id, result.run_id);
+      }
+
       // Handle the response from ComfyUI
-      if (result.output?.images?.[0]?.url) {
-        setGeneratedImage(result.output.images[0].url);
+      if (result.image_url) {
+        setGeneratedImage(result.image_url);
       } else {
         throw new Error('No image URL in response');
       }
@@ -90,6 +130,9 @@ export default function Home() {
               >
                 {isGenerating ? 'Generating...' : 'Generate'}
               </button>
+              {polling || status ? (
+                <div className="mt-2 text-sm text-gray-400">Status: {status || 'Polling...'}</div>
+              ) : null}
             </div>
           </div>
         </div>
